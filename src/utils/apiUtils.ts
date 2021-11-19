@@ -1,6 +1,7 @@
 import CloudGraph from '@cloudgraph/sdk'
 import axios, { AxiosPromise } from 'axios'
 
+import apiSelectors from '../enums/apiSelectors'
 import azureLoggerText from '../properties/logger'
 import { AzureDebugScope, RequestConfig } from '../types'
 import { tryCatchWrapper } from './index'
@@ -44,10 +45,12 @@ export const createUriForMsRestApiRequest = ({
 
 export const getDataFromMsRestApi = async ({
   authToken,
-  initialUrl
+  initialUrl,
+  kindSelector = '',
 }: {
   authToken: string
   initialUrl: string
+  kindSelector?: string
 }): Promise<any> => {
   const allData = []
 
@@ -64,7 +67,13 @@ export const getDataFromMsRestApi = async ({
 
       const { value: data, nextLink } = response.data
 
-      allData.push(data || [])
+      allData.push(
+        ...(kindSelector
+          ? data?.filter(({ kind }) =>
+              kind.includes(apiSelectors.functionApp)
+            ) || []
+          : data || [])
+      )
 
       if (nextLink) {
         logger.info(lt.fetchingMoreRestApiData)
